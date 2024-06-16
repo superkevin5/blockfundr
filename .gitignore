@@ -1,0 +1,9 @@
+venv/
+*.iml
+.idea
+node_modules
+dist/
+.env
+**/*.env
+.next
+*.tar.gz

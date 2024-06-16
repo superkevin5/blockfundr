@@ -1,0 +1,10 @@
+{
+  "errorInvalidUserName": "错误的用户名和密码",
+  "internalServerError": "服务器错误",
+  "usernameAlreadyExists": "用户名已存在",
+  "loginSuccess": "登录成功",
+  "registerSuccess": "注册成功",
+  "logoutSuccessful": "登出成功",
+  "authenticationTokenMissing": "验证失败",
+  "sessionNotValid": "登陆过期"
+}
