@@ -1,63 +1,217 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-body{
-    background: #F7F5F2;
+.avatar {
+    .items-start {
+        display: none;
+    }
 }
 
-button:disabled{
-    @apply opacity-50 cursor-not-allowed;
+.css-1wvake5 {
+    min-width: 250px !important;
+    width: 250px !important;
 }
 
 
-.card{
-    @apply w-full bg-slate-50 p-3 drop-shadow-md rounded-md lg:p-6 ;
+.userManagement {
+    padding: 20px;
 }
 
-.ribbon{
-    @apply absolute top-0 right-0 m-2 py-1 px-2 rounded-md text-sm text-center text-white font-semibold ;
+
+.inventoryModalProductSelect {
+    .css-1nmdiq5-menu {
+        z-index:999;
+        top: 100%;
+        position: absolute;
+    }
 }
 
-.inner-card{
-    @apply bg-[#8d8daa18] p-3 mx-1 rounded-sm;
+.procurementModalProductSelect {
+    .css-1nmdiq5-menu {
+        z-index:999;
+    }
 }
 
-.input{
-    @apply border border-emerald-300 py-2 px-3 focus:outline-none focus:ring focus:ring-emerald-300 w-full;
-  }
 
-.form-control-input{
-    @apply border py-2 px-3 focus:outline-none focus:ring w-full rounded my-1;
+.react-confirm-alert-overlay {
+    background: rgba(0, 0, 0, 0) !important; /* Semi-transparent black */
+    .react-confirm-alert {
+        position: absolute;
+        top: 10px;
+    }
 }
 
-.button{
-    @apply border bg-emerald-500 text-white rounded-r-md px-2 hover:bg-emerald-600 active:bg-emerald-700 focus:outline-none focus:ring focus:ring-emerald-300;
+.deleted-order-confirm {
+    background: rgba(0, 0, 0, 0.5) !important; /* Semi-transparent black */
+
+    .react-confirm-alert {
+        position: relative;
+    }
 }
-  
-.progress{
-    @apply bg-[#F56D91] w-full text-xs font-medium text-white text-center p-0.5 leading-none rounded-l-full;
+
+
+.approve-order-confirm {
+    background: rgba(0, 0, 0, 0) !important; /* Semi-transparent black */
+    .react-confirm-alert {
+        position: absolute;
+        right: 20px;
+    }
 }
 
-.date-picker input {
-    box-sizing: border-box;
-    position: relative;
-  }
 
-input[type="date"]::-webkit-calendar-picker-indicator {
-    background: transparent;
-    bottom: 0;
-    color: transparent;
-    cursor: pointer;
-    height: auto;
-    left: 0;
-    position: absolute;
-    right: 0;
-    top: 0;
-    width: auto;
-  }
+/*.table-responsive {*/
+/*    width: 100%;*/
+/*    overflow-x: auto; !* Allow horizontal scroll only when necessary *!*/
+/*}*/
 
-  .withdraw-button{
-    @apply border bg-emerald-500 text-white rounded-md p-2 mt-1  font-bold hover:bg-emerald-600 active:bg-emerald-700 focus:outline-none focus:ring focus:ring-emerald-300;
+table th, table td {
+    word-wrap: break-word; /* Ensure content wraps within the cells */
+    white-space: normal; /* Ensure content wraps within the cells */
+}
+
+
+/* Basic table styling */
+table {
     width: 100%;
-  }
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 2px;
+    text-align: left;
+    p {
+        padding-bottom: 5px;
+    }
+    a {
+        text-decoration: none; /* Remove the default underline */
+        color: blue; /* Link color */
+        border-bottom: 2px solid transparent; /* Initial state with transparent bottom border */
+        transition: border-bottom 0.3s ease; /* Smooth transition effect */
+    }
+
+    a:hover {
+        border-bottom: 2px solid blue; /* Show bottom border on hover */
+    }
+}
+
+/* Add bottom border to each row */
+tr {
+    border-bottom: 1px solid #ddd;
+}
+
+/* Add hover effect on table rows */
+tr:hover {
+    background-color: #f1f1f1;
+    cursor: pointer;
+}
+
+/* Header row styling */
+th {
+    background-color: #f8f8f8;
+    font-weight: bold;
+}
+
+
+.item-status-deleted {
+    text-decoration: line-through;
+    color: grey; /* Optional: to make the text less prominent */
+}
+
+
+.inboundOrderSelect {
+    z-index: 999;
+}
+.inbound__menu {
+    z-index: 999 !important;
+    position: absolute !important;
+}
+
+table tr th:last-child {
+    min-width: 50px;
+}
+
+.actionButtonStyles {
+    color: blue;
+    border: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+}
+.actionButtonStyles:hover {
+    text-decoration: underline;
+}
+
+.inventoryModal {
+    text-align: center;
+}
+
+
+/* Define styles for different statuses */
+.item-status-complete {
+    .status {
+        color: #155724 !important; /* Dark green text for complete */
+    }
+
+}
+
+.item-status-in-progress {
+    .status {
+        color: #856404 !important; /* Dark yellow text for in progress */
+    }
+
+}
+
+.item-status-deleted {
+    .status {
+        color: #721c24 !important; /* Dark red text for deleted */
+    }
+}
+.item-status-approved {
+    .status {
+        color: #155724 !important;
+    }
+}
+
+/* Define styles for different statuses */
+.item-status-complete:hover {
+    .status {
+        color: #155724 !important; /* Dark green text for complete */
+    }
+
+}
+
+.item-status-in-progress:hover {
+    .status {
+        color: #856404 !important; /* Dark yellow text for in progress */
+    }
+}
+
+.item-status-deleted:hover {
+    .status {
+        color: #721c24 !important; /* Dark red text for deleted */
+    }
+}
+
+.item-status-approved:hover {
+    .status {
+        color: #155724 !important;
+    }
+}
+
+.inline-checkbox {
+    display: flex;
+    flex-direction:row;
+}
+
+@keyframes opacityAnimation {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+    100% {
+        opacity: 1;
+    }
+}
