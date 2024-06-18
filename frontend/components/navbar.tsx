@@ -17,16 +17,17 @@ import {ThemeSwitch} from "@/components/theme-switch";
 import {
     SearchIcon,
 } from "@/components/icons";
+import { faWallet, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 import {User} from "@nextui-org/user";
 import {Logo} from "@/components/icons";
-import React from "react";
+import React, {useEffect, useState} from "react";
 import {isAuthChecked, login, logout} from "@/utils/auth";
 import {useRouter} from "next/router";
 import {useAuth} from "@/components/authContext";
 import '@fortawesome/fontawesome-svg-core/styles.css'; // Import the CSS
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faWallet } from '@fortawesome/free-solid-svg-icons';
-import {useDispatch, useSelector} from "react-redux"; // Import the wallet icon
+import {useDispatch, useSelector} from "react-redux";
+import {walletAddressLoaded} from "@/redux/actions"; // Import the wallet icon
 
 const notify = (error: String) => toast.error(error);
 
@@ -35,85 +36,67 @@ export const Navbar = () => {
     const {user, setUser} = useAuth();
     const dispatch = useDispatch();
     // const web3 = useSelector(state => state.web3Reducer.connection)
+    const [account, setAccount] = useState<string | null>(null);
 
 
-    React.useEffect(() => {
-        // checkAuth();
+    useEffect(() => {
+        checkIfWalletIsConnected();
     }, []);
 
-//     const loadAccount = async (web3, dispatch) => {
-//         const account = await web3.eth.getAccounts();
-//         const network = await web3.eth.net.getId();
-//
-// //   if (network !== Number(process.env.REACT_APP_NETWORK_ID)) {
-// //     alert("Contract not deployed in this network !");
-// //   }
-//         dispatch(actions.walletAddressLoaded(account[0]));
-//         localStorage.setItem("ADDRESS",account[0])
-//         return account;
-//     };
-
-    const handleConenctWallet = async () => {
-
+    const checkIfWalletIsConnected = async () => {
         //@ts-ignore
         if (window.ethereum) {
-            //@ts-ignore
-            await window.ethereum.request({method:"eth_requestAccounts"})
-            // loadAccount(web3,dispatch)
+            try {
+                //@ts-ignore
+                const accounts = await window.ethereum.request({ method: "eth_accounts" });
+                if (accounts.length > 0) {
+                    const account = accounts[0];
+                    console.log(`Already connected account: ${account}`);
+                    setAccount(account);
+                    dispatch(walletAddressLoaded(account));
+                    localStorage.setItem("ADDRESS", account);
+                }
+            } catch (error) {
+                console.error("Error checking wallet connection:", error);
+            }
+        }
+    };
+
+
+    const handleConnectWallet = async () => {
+        //@ts-ignore
+        if (window.ethereum) {
+            try {
+                //@ts-ignore
+                const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+                if (accounts.length > 0) {
+                    const account = accounts[0];
+                    console.log(`Connected account: ${account}`);
+                    setAccount(account);
+                    dispatch(walletAddressLoaded(account));
+                    localStorage.setItem("ADDRESS", account);
+                    toast.success(`Wallet connected: ${account}`);
+                } else {
+                    console.error("No accounts found.");
+                    toast.error("No accounts found.");
+                }
+            } catch (error) {
+                console.error("Error connecting to wallet:", error);
+                toast.error("Error connecting to wallet");
+            }
         } else {
-            window.alert(
-                "Non-Ethereum browser detected. You should consider trying MetaMask!"
-            );
-        }
-    }
-    const checkAuth = async () => {
-        try {
-            // Check if the user is logged in
-            const isLoggedUser = await isAuthChecked(); // Determine if the user is logged in
-            if (isLoggedUser) {
-                setUser(isLoggedUser)
-                // router.push('/dashboard');
-            } else {
-                setUser({
-                    name: "",
-                    username: "",
-                    userId: "",
-                    role: ""
-                })
-                router.push('/login');
-            }
-        } catch (error) {
-            setUser({
-                name: "",
-                username: "",
-                userId: "",
-                role: ""
-            })
-            console.error('Error checking authentication:', error);
-            router.push('/login'); // Redirect to login page on error
+            window.alert("Non-Ethereum browser detected. You should consider trying MetaMask!");
         }
     };
-
-    const handleLogout = async () => {
-        try {
-            const response = await logout()
-            const data = await response.json();
-            setUser({
-                name: "",
-                username: "",
-                userId: "",
-                role: ""
-            })
-            if (!response.ok) {
-                throw new Error(data.message || 'Loginout failed');
-            }
-            router.push('/login');
-        } catch (error: any) {
-            notify(error.message)
-        }
+    const handleDisconnectWallet = () => {
+        setAccount(null);
+        localStorage.removeItem("ADDRESS");
+        dispatch(walletAddressLoaded(null));
+        toast.info("Wallet disconnected");
     };
 
-    // @ts-ignore
+
+
     // @ts-ignore
     return (
         <nav
@@ -139,25 +122,31 @@ export const Navbar = () => {
                         </a>
                     </div>
                     <div className="flex items-center">
-                        {user.userId && (<User
-                            name={user.name}
-                            className={"avatar"}
-                            description={user.name}
-                            avatarProps={{
-                                src: ""
-                            }}
-                        />)}
-                        <Button
-                            endContent={<FontAwesomeIcon icon={faWallet} />}
-                            onClick={() => handleConenctWallet()}
-                        >
-                            Connect Wallet
-                        </Button>
+                        {account ? (
+                            <div className="flex items-center space-x-4">
+                                <span
+                                    className="text-sm text-gray-500 dark:text-gray-400">{`Connected: ${account}`}</span>
+                                <Button
+                                    endContent={<FontAwesomeIcon icon={faSignOutAlt}/>}
+                                    onClick={handleDisconnectWallet}
+                                >
+                                    Disconnect
+                                </Button>
+                            </div>
+                        ) : (
+                            <Button
+                                endContent={<FontAwesomeIcon icon={faWallet}/>}
+                                onClick={handleConnectWallet}
+                            >
+                                Connect Wallet
+                            </Button>
+                        )}
                     </div>
                 </div>
             </div>
+            <ToastContainer/>
         </nav>
 
-)
+    )
 
 };
