@@ -1,27 +1,12 @@
 import {
-    Button,
-    Kbd,
-    Link,
-    Input,
-    Navbar as NextUINavbar,
-    NavbarContent,
-    NavbarMenu,
-    NavbarMenuToggle,
-    NavbarBrand,
-    NavbarItem,
-    NavbarMenuItem,
+    Button
 } from "@nextui-org/react";
 import {ToastContainer, toast} from 'react-toastify';
-import NextLink from "next/link";
-import {ThemeSwitch} from "@/components/theme-switch";
 import {
     SearchIcon,
 } from "@/components/icons";
 import { faWallet, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
-import {User} from "@nextui-org/user";
-import {Logo} from "@/components/icons";
 import React, {useEffect, useState} from "react";
-import {isAuthChecked, login, logout} from "@/utils/auth";
 import {useRouter} from "next/router";
 import {useAuth} from "@/components/authContext";
 import '@fortawesome/fontawesome-svg-core/styles.css'; // Import the CSS
