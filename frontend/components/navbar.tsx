@@ -21,7 +21,8 @@ export const Navbar = () => {
     const {user, setUser} = useAuth();
     const dispatch = useDispatch();
     // const web3 = useSelector(state => state.web3Reducer.connection)
-    const [account, setAccount] = useState<string | null>(null);
+    //@ts-ignore
+    const account = useSelector((state) => state.web3.account);
 
 
     useEffect(() => {
@@ -37,7 +38,7 @@ export const Navbar = () => {
                 if (accounts.length > 0) {
                     const account = accounts[0];
                     console.log(`Already connected account: ${account}`);
-                    setAccount(account);
+                    // setAccount(account);
                     dispatch(walletAddressLoaded(account));
                     localStorage.setItem("ADDRESS", account);
                 }
@@ -57,7 +58,7 @@ export const Navbar = () => {
                 if (accounts.length > 0) {
                     const account = accounts[0];
                     console.log(`Connected account: ${account}`);
-                    setAccount(account);
+                    // setAccount(account);
                     dispatch(walletAddressLoaded(account));
                     localStorage.setItem("ADDRESS", account);
                     toast.success(`Wallet connected: ${account}`);
@@ -74,7 +75,7 @@ export const Navbar = () => {
         }
     };
     const handleDisconnectWallet = () => {
-        setAccount(null);
+        // setAccount(null);
         localStorage.removeItem("ADDRESS");
         dispatch(walletAddressLoaded(null));
         toast.info("Wallet disconnected");

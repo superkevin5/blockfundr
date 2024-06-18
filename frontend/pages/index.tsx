@@ -6,12 +6,13 @@ import { siteConfig } from "@/config/site";
 import { GithubIcon } from "@/components/icons";
 import DefaultLayout from "@/layouts/default";
 import React from "react";
+import WelcomeButtons from "@/components/welcomeButtons";
 
 export default function IndexPage() {
 
 	return (
 		<DefaultLayout>
-			<span></span>
+			<WelcomeButtons />
 		</DefaultLayout>
 	);
 }
