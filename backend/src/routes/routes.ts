@@ -24,8 +24,7 @@ router.use((req: Request, res: Response, next) => {
     if (req.path === '/logout' || req.path === '/login' || req.path === '/register') {
         next();
     } else {
-        next();
-        // authenticateToken(req, res, next);
+        authenticateToken(req, res, next);
     }
 });
 

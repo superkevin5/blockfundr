@@ -3,6 +3,8 @@
 import { useMemo } from 'react';
 import { ApolloClient, InMemoryCache, HttpLink, ApolloLink, from } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
+import {walletAddressLoaded} from "@/redux/actions";
+import store from "@/redux/store";
 
 let apolloClient:any;
 
@@ -12,7 +14,7 @@ let apolloClient:any;
 
 // Combine the links
 
-function createApolloClient(router: any) {
+function createApolloClient(router: any, store: any) {
 // Create a custom Apollo Link to log responses
     const responseInterceptor = new ApolloLink((operation, forward) => {
 
@@ -36,11 +38,11 @@ function createApolloClient(router: any) {
 
                     // Check for 401 Unauthorized status code
                     if (extensions?.code === 'UNAUTHENTICATED') {
-                        alert('用户session 过期了， 请重新登陆')
+                        alert('expired, please re-login')
+                        store.dispatch(walletAddressLoaded(null)); // Dispatch the action
                         router.push('/login');
                     }
                 }
-
             );
         }
 
@@ -48,7 +50,8 @@ function createApolloClient(router: any) {
             console.log(`[Network error]: ${networkError}`);
             // @ts-ignore
             if (networkError.statusCode === 401) {
-                alert('用户session 过期了， 请重新登陆')
+                alert('expired, please re-login')
+                store.dispatch(walletAddressLoaded(null)); // Dispatch the action
                 router.push('/login');
             }
         }
@@ -71,8 +74,8 @@ function createApolloClient(router: any) {
     });
 }
 
-export function initializeApollo(initialState = null, router: any) {
-    const _apolloClient = apolloClient ?? createApolloClient(router);
+export function initializeApollo(initialState = null, router: any, store:any) {
+    const _apolloClient = apolloClient ?? createApolloClient(router, store);
 
     // If your page has Next.js data fetching methods that use Apollo Client, the initial state
     // gets hydrated here
@@ -88,7 +91,7 @@ export function initializeApollo(initialState = null, router: any) {
 }
 
 // @ts-ignore
-export function useApollo(initialState, router) {
-    const store = useMemo(() => initializeApollo(initialState, router), [initialState]);
-    return store;
+export function useApollo(initialState, router, store) {
+    const apolloStore = useMemo(() => initializeApollo(initialState, router, store), [initialState]);
+    return apolloStore;
 }

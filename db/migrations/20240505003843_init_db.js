@@ -8,7 +8,7 @@ exports.up = async function (knex) {
         CREATE TABLE IF NOT EXISTS public.users
         (
             id serial,
-            wallet_address text,
+            wallet_address text UNIQUE,
             PRIMARY KEY (id)
             );
 

@@ -6,13 +6,16 @@ import '@fortawesome/fontawesome-svg-core/styles.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWallet, faVideo } from '@fortawesome/free-solid-svg-icons';
 import {walletAddressLoaded} from "@/redux/actions";
-import {useDispatch, useSelector} from "react-redux"; // Import required icons
+import {useDispatch, useSelector} from "react-redux";
+import {login, saveOrFetchUser} from "@/utils/requestHandlers";
+import {useApolloClient} from "@apollo/client"; // Import required icons
 
 const WelcomeButtons = () => {
     const router = useRouter();
     const dispatch = useDispatch();
     //@ts-ignore
     const account = useSelector((state) => state.web3.account);
+    const client = useApolloClient();
 
     const handleConnectWallet = async () => {
         //@ts-ignore
@@ -20,9 +23,8 @@ const WelcomeButtons = () => {
             try {
                 //@ts-ignore
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-
                 dispatch(walletAddressLoaded(accounts[0]));
-                localStorage.setItem("ADDRESS", accounts[0]);
+                const user = await login(account)
                 toast.success(`Wallet connected: ${accounts[0]}`);
             } catch (error) {
                 console.error('Error connecting to wallet:', error);

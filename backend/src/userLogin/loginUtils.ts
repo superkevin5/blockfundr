@@ -19,27 +19,25 @@ function generateSessionId() {
 
 
 export async function loginUser(req: Request, res: Response): Promise<void> {
-    const { username, password } = req.body;
+    const {walletAddress} = req.body;
 
     try {
         // Retrieve user from the database by username
-        const user = await getUserByUsername(username);
+        let user = await getUserByWalletAddress(walletAddress);
 
         if (!user) {
-            // @ts-ignore
-            return res.status(401).json({ message: i18next.t('common:errorInvalidUserName') });
+            user = await insertUser(walletAddress);
         }
-
         // Compare hashed password with input password
-        const passwordMatch = await bcrypt.compare(password, user.password);
+        const walletAddressMatch = walletAddress === user.wallet_address
 
-        if (!passwordMatch) {
+        if (!walletAddressMatch) {
             // @ts-ignore
-            return res.status(401).json({ message: i18next.t('common:errorInvalidUserName') });
+            return res.status(401).json({ message: i18next.t('common:errorInvalidWalletAddress') });
         }
 
         // @ts-ignore
-        const token = jwt.sign({ userId: user.id, name: user.name, username: user.username}, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ userId: user.id, walletAddress: user.wallet_address}, process.env.JWT_SECRET, { expiresIn: '1h' });
         res.cookie('authorization', token, {
             // Optional cookie options
             maxAge: 3600000, // 1 hour in milliseconds
@@ -54,29 +52,29 @@ export async function loginUser(req: Request, res: Response): Promise<void> {
     }
 }
 
-async function getUserByUsername(username: string): Promise<any> {
-    const { rows } = await getPoolInstance().query('SELECT * FROM users WHERE username = $1', [username]);
+async function getUserByWalletAddress(wallet_address: string): Promise<any> {
+    const { rows } = await getPoolInstance().query('SELECT * FROM users WHERE wallet_address = $1', [wallet_address]);
     return rows[0];
 }
 
 
 export async function registerUser(req: Request, res: Response): Promise<void> {
-    const { username, password } = req.body;
+    const { walletAddress } = req.body;
 
     try {
         // Check if the username already exists
-        const existingUser = await getUserByUsername(username);
+        const existingUser = await getUserByWalletAddress(walletAddress);
         if (existingUser) {
             // @ts-ignore
             return res.status(400).json({ message: i18next.t('common:usernameAlreadyExists') });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedWalletAddress = await bcrypt.hash(walletAddress, 10);
 
-        const user = await insertUser(username, hashedPassword);
+        const user = await insertUser(walletAddress);
 
         // @ts-ignore
-        const token = jwt.sign({ userId: user.id, name: user.name, username: user.username}, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ userId: user.id, name: user.name, username: user.username}, process.env.JWT_SECRET, { expiresIn: '2h' });
 
         // Set the token in a cookie
         res.cookie('authorization', token, {
@@ -92,9 +90,9 @@ export async function registerUser(req: Request, res: Response): Promise<void> {
     }
 }
 
-async function insertUser(username: string, password: string): Promise<void> {
+async function insertUser(wallet_address: string): Promise<void> {
     const pool = getPoolInstance();
-    const result = await pool.query('INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id', [username, password]);
+    const result = await pool.query('INSERT INTO users (wallet_address) VALUES ($1) RETURNING id', [wallet_address]);
 
     // Extract the inserted user ID from the result
     return result.rows[0].id;

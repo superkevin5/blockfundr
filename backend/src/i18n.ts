@@ -1,18 +1,15 @@
 import i18next from 'i18next';
-import * as chineseCommon from './locales/chinese.json';
+import * as englishCommon from './locales/english.json';
 
 export const defaultNS = 'common'; // Default name space
 
 i18next.init({
-    lng: 'cn', // Default language
-    fallbackLng: 'cn', // Fallback language
+    lng: 'en', // Default language
+    fallbackLng: 'en', // Fallback language
     debug: true, // Enable debug mode (optional)
     resources: {
-        cn: {
-            common: chineseCommon,
-        },
         en: {
-            common: chineseCommon,
+            common: englishCommon,
         },
     },
 });

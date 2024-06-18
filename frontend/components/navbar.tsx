@@ -12,7 +12,10 @@ import {useAuth} from "@/components/authContext";
 import '@fortawesome/fontawesome-svg-core/styles.css'; // Import the CSS
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {useDispatch, useSelector} from "react-redux";
-import {walletAddressLoaded} from "@/redux/actions"; // Import the wallet icon
+import {walletAddressLoaded} from "@/redux/actions";
+import {useApolloClient} from "@apollo/client";
+import {login, saveOrFetchUser} from "@/utils/requestHandlers";
+import {logout} from "@/utils/auth"; // Import the wallet icon
 
 const notify = (error: String) => toast.error(error);
 
@@ -20,6 +23,8 @@ export const Navbar = () => {
     const router = useRouter();
     const {user, setUser} = useAuth();
     const dispatch = useDispatch();
+    const client = useApolloClient();
+
     // const web3 = useSelector(state => state.web3Reducer.connection)
     //@ts-ignore
     const account = useSelector((state) => state.web3.account);
@@ -40,7 +45,7 @@ export const Navbar = () => {
                     console.log(`Already connected account: ${account}`);
                     // setAccount(account);
                     dispatch(walletAddressLoaded(account));
-                    localStorage.setItem("ADDRESS", account);
+                    const user = await login(account)
                 }
             } catch (error) {
                 console.error("Error checking wallet connection:", error);
@@ -60,7 +65,11 @@ export const Navbar = () => {
                     console.log(`Connected account: ${account}`);
                     // setAccount(account);
                     dispatch(walletAddressLoaded(account));
-                    localStorage.setItem("ADDRESS", account);
+                    const user = await login(account)
+
+                    if(!user.ok) {
+                        throw Error('Wrong user')
+                    }
                     toast.success(`Wallet connected: ${account}`);
                 } else {
                     console.error("No accounts found.");
@@ -74,9 +83,8 @@ export const Navbar = () => {
             window.alert("Non-Ethereum browser detected. You should consider trying MetaMask!");
         }
     };
-    const handleDisconnectWallet = () => {
-        // setAccount(null);
-        localStorage.removeItem("ADDRESS");
+    const handleDisconnectWallet = async () => {
+        await logout()
         dispatch(walletAddressLoaded(null));
         toast.info("Wallet disconnected");
     };

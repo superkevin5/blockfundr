@@ -15,7 +15,7 @@ import {Provider} from "react-redux";
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
-	const apolloClient = useApollo(pageProps.initialApolloState, router);
+	const apolloClient = useApollo(pageProps.initialApolloState, router, store);
 
 	return (
 		<NextUIProvider navigate={router.push}>
