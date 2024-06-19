@@ -18,13 +18,13 @@ exports.up = async function (knex) {
             title text NOT NULL,
             description text,
             goal numeric NOT NULL,
-            deadline time with time zone NOT NULL,
+            deadline timestamp with time zone NOT NULL,
             is_reach_goal boolean DEFAULT false,
             is_closed boolean DEFAULT false,
             fund_raiser_id integer,
             video_url text,
-            created_at time with time zone,
-            updated_at time with time zone,
+            created_at timestamp with time zone,
+            updated_at timestamp with time zone,
             PRIMARY KEY (id)
             );
 
@@ -35,12 +35,12 @@ exports.up = async function (knex) {
             project_id integer NOT NULL,
             investor_id integer NOT NULL,
             is_withdrawn boolean DEFAULT false,
-            fund_time time with time zone NOT NULL,
+            fund_time timestamp with time zone NOT NULL,
             is_rewarded boolean DEFAULT false,
-            withdraw_time time with time zone,
-            reward_time time with time zone,
-            created_at time with time zone,
-            updated_at time with time zone,
+            withdraw_time timestamp with time zone,
+            reward_time timestamp with time zone,
+            created_at timestamp with time zone,
+            updated_at timestamp with time zone,
             PRIMARY KEY (id)
             );
 
