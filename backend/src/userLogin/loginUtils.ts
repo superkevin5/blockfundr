@@ -29,7 +29,7 @@ export async function loginUser(req: Request, res: Response): Promise<void> {
             user = await insertUser(walletAddress);
         }
         // Compare hashed password with input password
-        const walletAddressMatch = walletAddress === user.wallet_address
+        const walletAddressMatch = (walletAddress === user.wallet_address)
 
         if (!walletAddressMatch) {
             // @ts-ignore
@@ -92,10 +92,10 @@ export async function registerUser(req: Request, res: Response): Promise<void> {
 
 async function insertUser(wallet_address: string): Promise<void> {
     const pool = getPoolInstance();
-    const result = await pool.query('INSERT INTO users (wallet_address) VALUES ($1) RETURNING id', [wallet_address]);
+    const result = await pool.query('INSERT INTO users (wallet_address) VALUES ($1) RETURNING *', [wallet_address]);
 
     // Extract the inserted user ID from the result
-    return result.rows[0].id;
+    return result.rows[0];
 }
 
 

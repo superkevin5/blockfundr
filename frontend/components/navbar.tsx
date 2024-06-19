@@ -76,15 +76,15 @@ export const Navbar = () => {
                     const account = accounts[0];
                     console.log(`Connected account: ${account}`);
                     // setAccount(account);
-                    dispatch(walletAddressLoaded(account));
                     const user = await login(account)
-
+                    console.log('user', user)
                     if(!user.ok) {
                         throw Error('Wrong user')
                     }
                     const isLoggedUser = await isAuthChecked(); // Determine if the user is logged in
 
                     if (isLoggedUser) {
+                        dispatch(walletAddressLoaded(account));
                         dispatch(userLoaded(isLoggedUser));
                     } else {
                         dispatch(userLoaded(null));
