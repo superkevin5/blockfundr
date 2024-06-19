@@ -4,7 +4,7 @@ const initialState = {};
 
 import {
     CROWD_FUNDING_CONTRACT_LOADED, INCREASE_PROGRESS, NEW_PROJECT_CONTRACT_LOADED, NEW_PROJECT_LOADED,
-    PROJECT_CONTRACTS_LOADED, PROJECTS_LOADED,
+    PROJECT_CONTRACTS_LOADED, PROJECTS_LOADED, USER_LOADED,
     WALLET_ADDRESS_LOADED,
     WEB3_LOADED,
     WITHDRAW_BALANCE
@@ -15,6 +15,11 @@ import {weiToEther} from "@/utils/common";
 export const web3Reducer = (state = initialState, action) => {
     // eslint-disable-next-line default-case
     switch (action.type) {
+        case USER_LOADED:
+            return {
+                ...state,
+                user: action.payload,
+            };
         case WEB3_LOADED:
             return {
                 ...state,

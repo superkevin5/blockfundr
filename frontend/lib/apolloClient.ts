@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { ApolloClient, InMemoryCache, HttpLink, ApolloLink, from } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
-import {walletAddressLoaded} from "@/redux/actions";
+import {userLoaded, walletAddressLoaded} from "@/redux/actions";
 import store from "@/redux/store";
 
 let apolloClient:any;
@@ -40,7 +40,8 @@ function createApolloClient(router: any, store: any) {
                     if (extensions?.code === 'UNAUTHENTICATED') {
                         alert('expired, please re-login')
                         store.dispatch(walletAddressLoaded(null)); // Dispatch the action
-                        router.push('/login');
+                        store.dispatch(userLoaded(null)); // Dispatch the action
+                        router.push('/');
                     }
                 }
             );
@@ -52,7 +53,8 @@ function createApolloClient(router: any, store: any) {
             if (networkError.statusCode === 401) {
                 alert('expired, please re-login')
                 store.dispatch(walletAddressLoaded(null)); // Dispatch the action
-                router.push('/login');
+                store.dispatch(userLoaded(null));
+                router.push('/');
             }
         }
     });

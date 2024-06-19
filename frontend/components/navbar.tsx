@@ -12,46 +12,58 @@ import {useAuth} from "@/components/authContext";
 import '@fortawesome/fontawesome-svg-core/styles.css'; // Import the CSS
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {useDispatch, useSelector} from "react-redux";
-import {walletAddressLoaded} from "@/redux/actions";
+import {userLoaded, walletAddressLoaded} from "@/redux/actions";
 import {useApolloClient} from "@apollo/client";
-import {login, saveOrFetchUser} from "@/utils/requestHandlers";
+import {isAuthChecked, login, saveOrFetchUser} from "@/utils/requestHandlers";
 import {logout} from "@/utils/auth"; // Import the wallet icon
 
 const notify = (error: String) => toast.error(error);
 
 export const Navbar = () => {
     const router = useRouter();
-    const {user, setUser} = useAuth();
     const dispatch = useDispatch();
     const client = useApolloClient();
 
-    // const web3 = useSelector(state => state.web3Reducer.connection)
     //@ts-ignore
     const account = useSelector((state) => state.web3.account);
 
 
     useEffect(() => {
-        checkIfWalletIsConnected();
+        checkAuth()
     }, []);
-
-    const checkIfWalletIsConnected = async () => {
-        //@ts-ignore
-        if (window.ethereum) {
-            try {
+    const checkAuth = async () => {
+        try {
+            // Check if the user is logged in
+            const isLoggedUser = await isAuthChecked(); // Determine if the user is logged in
+            if (isLoggedUser) {
+                dispatch(userLoaded(isLoggedUser));
                 //@ts-ignore
-                const accounts = await window.ethereum.request({ method: "eth_accounts" });
-                if (accounts.length > 0) {
-                    const account = accounts[0];
-                    console.log(`Already connected account: ${account}`);
-                    // setAccount(account);
-                    dispatch(walletAddressLoaded(account));
-                    const user = await login(account)
+                if (window.ethereum) {
+                    try {
+                        //@ts-ignore
+                        const accounts = await window.ethereum.request({ method: "eth_accounts" });
+                        if (accounts.length > 0) {
+                            const account = accounts[0];
+                            console.log(`Already connected account: ${account}`);
+                            dispatch(walletAddressLoaded(account));
+                        }
+                    } catch (error) {
+                        dispatch(walletAddressLoaded(null));
+                        console.error("Error checking wallet connection:", error);
+                    }
                 }
-            } catch (error) {
-                console.error("Error checking wallet connection:", error);
+            } else {
+                dispatch(userLoaded(null));
+                dispatch(walletAddressLoaded(null));
+                router.push('/');
             }
+        } catch (error) {
+
+            console.error('Error checking authentication:', error);
+            router.push('/'); // Redirect to login page on error
         }
     };
+
 
 
     const handleConnectWallet = async () => {
@@ -70,6 +82,14 @@ export const Navbar = () => {
                     if(!user.ok) {
                         throw Error('Wrong user')
                     }
+                    const isLoggedUser = await isAuthChecked(); // Determine if the user is logged in
+
+                    if (isLoggedUser) {
+                        dispatch(userLoaded(isLoggedUser));
+                    } else {
+                        dispatch(userLoaded(null));
+                        console.error("Error checking wallet connection:");
+                    }
                     toast.success(`Wallet connected: ${account}`);
                 } else {
                     console.error("No accounts found.");
@@ -84,8 +104,11 @@ export const Navbar = () => {
         }
     };
     const handleDisconnectWallet = async () => {
-        await logout()
+        console.log("wallet disconntected");
         dispatch(walletAddressLoaded(null));
+        dispatch(userLoaded(null));
+        await logout()
+        router.push('/');
         toast.info("Wallet disconnected");
     };
 

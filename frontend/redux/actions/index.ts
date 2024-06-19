@@ -4,7 +4,7 @@
 import {
     CROWD_FUNDING_CONTRACT_LOADED, INCREASE_PROGRESS, NEW_PROJECT_CONTRACT_LOADED, NEW_PROJECT_LOADED,
     PROJECT_CONTRACTS_LOADED,
-    PROJECTS_LOADED,
+    PROJECTS_LOADED, USER_LOADED,
     WALLET_ADDRESS_LOADED,
     WEB3_LOADED, WITHDRAW_BALANCE
 } from "@/types";
@@ -22,6 +22,16 @@ export const walletAddressLoaded = (address: any) => {
         payload: address
     }
 }
+
+export const userLoaded = (user: any) => {
+    return {
+        type: USER_LOADED,
+        payload: user
+    }
+}
+
+
+
 
 // Crowd funding actions
 

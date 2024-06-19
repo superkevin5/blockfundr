@@ -22,3 +22,38 @@ export const SAVE_USER = gql`
     }
   }
 `;
+
+
+
+export const GET_PROJECT_DETAILS = gql`
+ query GetProjectsByFundRaiser($fundRaiserId: Int!) {
+  allProjects(condition: { fundRaiserId: $fundRaiserId }) {
+    nodes {
+      id
+      title
+      description
+      goal
+      deadline
+      isReachGoal
+      isClosed
+      videoUrl
+      createdAt
+      updatedAt
+      fundRaiserId
+      userByFundRaiserId{
+        id
+        walletAddress
+      }
+    }
+  }
+}
+`;
+
+export const UPLOAD_VIDEO = gql`
+  mutation UploadVideo($projectId: Int!, $video: Upload!) {
+    uploadVideo(projectId: $projectId, video: $video) {
+      success
+      message
+    }
+  }
+`;

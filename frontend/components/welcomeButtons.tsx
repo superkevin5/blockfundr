@@ -5,9 +5,9 @@ import 'react-toastify/dist/ReactToastify.css';
 import '@fortawesome/fontawesome-svg-core/styles.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWallet, faVideo } from '@fortawesome/free-solid-svg-icons';
-import {walletAddressLoaded} from "@/redux/actions";
+import {userLoaded, walletAddressLoaded} from "@/redux/actions";
 import {useDispatch, useSelector} from "react-redux";
-import {login, saveOrFetchUser} from "@/utils/requestHandlers";
+import {isAuthChecked, login, saveOrFetchUser} from "@/utils/requestHandlers";
 import {useApolloClient} from "@apollo/client"; // Import required icons
 
 const WelcomeButtons = () => {
@@ -22,24 +22,44 @@ const WelcomeButtons = () => {
         if (window.ethereum) {
             try {
                 //@ts-ignore
-                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                dispatch(walletAddressLoaded(accounts[0]));
-                const user = await login(account)
-                toast.success(`Wallet connected: ${accounts[0]}`);
+                const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+                if (accounts.length > 0) {
+                    const account = accounts[0];
+                    console.log(`Connected account: ${account}`);
+                    // setAccount(account);
+                    dispatch(walletAddressLoaded(account));
+                    const user = await login(account)
+
+                    if(!user.ok) {
+                        throw Error('Wrong user')
+                    }
+                    const isLoggedUser = await isAuthChecked(); // Determine if the user is logged in
+
+                    if (isLoggedUser) {
+                        dispatch(userLoaded(isLoggedUser));
+                    } else {
+                        dispatch(userLoaded(null));
+                        console.error("Error checking wallet connection:");
+                    }
+                    toast.success(`Wallet connected: ${account}`);
+                } else {
+                    console.error("No accounts found.");
+                    toast.error("No accounts found.");
+                }
             } catch (error) {
-                console.error('Error connecting to wallet:', error);
-                toast.error('Error connecting to wallet');
+                console.error("Error connecting to wallet:", error);
+                toast.error("Error connecting to wallet");
             }
         } else {
-            window.alert('Non-Ethereum browser detected. You should consider trying MetaMask!');
+            window.alert("Non-Ethereum browser detected. You should consider trying MetaMask!");
         }
     };
 
-    const handleButtonClick = (path: string) => {
+    const handleButtonClick = async (path: string) => {
         if (account) {
             router.push(path);
         } else {
-            handleConnectWallet();
+            await handleConnectWallet();
             router.push(path);
         }
     };
