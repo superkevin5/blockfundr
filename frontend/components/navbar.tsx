@@ -2,20 +2,15 @@ import {
     Button
 } from "@nextui-org/react";
 import {ToastContainer, toast} from 'react-toastify';
-import {
-    SearchIcon,
-} from "@/components/icons";
 import { faWallet, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 import React, {useEffect, useState} from "react";
 import {useRouter} from "next/router";
-import {useAuth} from "@/components/authContext";
 import '@fortawesome/fontawesome-svg-core/styles.css'; // Import the CSS
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {useDispatch, useSelector} from "react-redux";
 import {userLoaded, walletAddressLoaded} from "@/redux/actions";
 import {useApolloClient} from "@apollo/client";
-import {isAuthChecked, login, saveOrFetchUser} from "@/utils/requestHandlers";
-import {logout} from "@/utils/auth"; // Import the wallet icon
+import {clearKeyFromLocalStorage, getItemWithExpiration, setItemWithExpiration} from "@/utils/date"; // Import the wallet icon
 
 const notify = (error: String) => toast.error(error);
 
@@ -34,31 +29,14 @@ export const Navbar = () => {
     const checkAuth = async () => {
         try {
             // Check if the user is logged in
-            const isLoggedUser = await isAuthChecked(); // Determine if the user is logged in
-            if (isLoggedUser) {
-                dispatch(userLoaded(isLoggedUser));
-                //@ts-ignore
-                if (window.ethereum) {
-                    try {
-                        //@ts-ignore
-                        const accounts = await window.ethereum.request({ method: "eth_accounts" });
-                        if (accounts.length > 0) {
-                            const account = accounts[0];
-                            console.log(`Already connected account: ${account}`);
-                            dispatch(walletAddressLoaded(account));
-                        }
-                    } catch (error) {
-                        dispatch(walletAddressLoaded(null));
-                        console.error("Error checking wallet connection:", error);
-                    }
-                }
+            const account = getItemWithExpiration("user"); // Determine if the user is logged in
+            if (account) {
+                dispatch(walletAddressLoaded(account));
             } else {
-                dispatch(userLoaded(null));
                 dispatch(walletAddressLoaded(null));
                 router.push('/');
             }
         } catch (error) {
-
             console.error('Error checking authentication:', error);
             router.push('/'); // Redirect to login page on error
         }
@@ -67,6 +45,7 @@ export const Navbar = () => {
 
 
     const handleConnectWallet = async () => {
+        clearKeyFromLocalStorage("user")
         //@ts-ignore
         if (window.ethereum) {
             try {
@@ -74,22 +53,9 @@ export const Navbar = () => {
                 const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
                 if (accounts.length > 0) {
                     const account = accounts[0];
+                    dispatch(walletAddressLoaded(account));
+                    setItemWithExpiration("user", account, 60)
                     console.log(`Connected account: ${account}`);
-                    // setAccount(account);
-                    const user = await login(account)
-                    console.log('user', user)
-                    if(!user.ok) {
-                        throw Error('Wrong user')
-                    }
-                    const isLoggedUser = await isAuthChecked(); // Determine if the user is logged in
-
-                    if (isLoggedUser) {
-                        dispatch(walletAddressLoaded(account));
-                        dispatch(userLoaded(isLoggedUser));
-                    } else {
-                        dispatch(userLoaded(null));
-                        console.error("Error checking wallet connection:");
-                    }
                     toast.success(`Wallet connected: ${account}`);
                 } else {
                     console.error("No accounts found.");
@@ -106,13 +72,10 @@ export const Navbar = () => {
     const handleDisconnectWallet = async () => {
         console.log("wallet disconntected");
         dispatch(walletAddressLoaded(null));
-        dispatch(userLoaded(null));
-        await logout()
+        clearKeyFromLocalStorage("user")
         router.push('/');
         toast.info("Wallet disconnected");
     };
-
-
 
     // @ts-ignore
     return (

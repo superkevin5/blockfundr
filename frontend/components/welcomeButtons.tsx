@@ -8,7 +8,8 @@ import { faWallet, faVideo } from '@fortawesome/free-solid-svg-icons';
 import {userLoaded, walletAddressLoaded} from "@/redux/actions";
 import {useDispatch, useSelector} from "react-redux";
 import {isAuthChecked, login, saveOrFetchUser} from "@/utils/requestHandlers";
-import {useApolloClient} from "@apollo/client"; // Import required icons
+import {useApolloClient} from "@apollo/client";
+import {clearKeyFromLocalStorage, setItemWithExpiration} from "@/utils/date"; // Import required icons
 
 const WelcomeButtons = () => {
     const router = useRouter();
@@ -18,6 +19,7 @@ const WelcomeButtons = () => {
     const client = useApolloClient();
 
     const handleConnectWallet = async () => {
+        clearKeyFromLocalStorage("user")
         //@ts-ignore
         if (window.ethereum) {
             try {
@@ -25,22 +27,9 @@ const WelcomeButtons = () => {
                 const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
                 if (accounts.length > 0) {
                     const account = accounts[0];
-                    console.log(`Connected account: ${account}`);
-                    // setAccount(account);
                     dispatch(walletAddressLoaded(account));
-                    const user = await login(account)
-
-                    if(!user.ok) {
-                        throw Error('Wrong user')
-                    }
-                    const isLoggedUser = await isAuthChecked(); // Determine if the user is logged in
-
-                    if (isLoggedUser) {
-                        dispatch(userLoaded(isLoggedUser));
-                    } else {
-                        dispatch(userLoaded(null));
-                        console.error("Error checking wallet connection:");
-                    }
+                    setItemWithExpiration("user", account, 60)
+                    console.log(`Connected account: ${account}`);
                     toast.success(`Wallet connected: ${account}`);
                 } else {
                     console.error("No accounts found.");

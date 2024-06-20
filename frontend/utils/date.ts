@@ -37,3 +37,51 @@ export function isDigitNumber(input) {
     const regex = /^[0-9]+(\.[0-9]+)?$/;
     return regex.test(input);
 }
+
+
+// utility.js
+
+// utility.ts
+
+export const setItemWithExpiration = (key: string, value: string, expirationInMinutes: number): void => {
+    const now = new Date();
+    const expiration = now.getTime() + expirationInMinutes * 60 * 1000;
+
+    const item = {
+        value: value,
+        expiration: expiration
+    };
+
+    localStorage.setItem(key, JSON.stringify(item));
+};
+
+export const getItemWithExpiration = (key: string): string | null => {
+    const itemStr = localStorage.getItem(key);
+
+    if (!itemStr) {
+        return null;
+    }
+
+    try {
+        const item = JSON.parse(itemStr);
+        const now = new Date();
+
+        if (now.getTime() > item.expiration) {
+            localStorage.removeItem(key);
+            return null;
+        }
+
+        return item.value;
+    } catch {
+        // If JSON parsing fails, remove the invalid item from localStorage
+        localStorage.removeItem(key);
+        return null;
+    }
+};
+
+
+export const clearKeyFromLocalStorage = (key: string): string | null => {
+    localStorage.removeItem(key);
+    return null;
+};
+
