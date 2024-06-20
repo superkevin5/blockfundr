@@ -1,6 +1,13 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react';
 import { toast } from 'react-toastify';
+import {useMutation, useQuery} from "@apollo/client";
+import {ADD_PROJECT_MUTATION} from "@/requests/mutations";
+import {useSelector} from "react-redux";
+import {GET_PROJECT_BY_FUNDRAISER_ID} from "@/requests/queries";
+import _ from 'lodash'
+import {formatTimestampToLocalDateTime} from "@/utils/date";
 const notify = (error: string) => toast.error(error); // Function to display error notifications
+const notifySuccess = (msg: string) => toast.success(msg); // Function to display error notifications
 
 const FundRaiserComponent: React.FC = () => {
     const [formData, setFormData] = useState({
@@ -8,10 +15,34 @@ const FundRaiserComponent: React.FC = () => {
         description: '',
         goal: '',
         deadline: '',
-        video_url: ''
     });
     const [uploadProgress, setUploadProgress] = useState(0);
     const [videoUrl, setVideoUrl] = useState<string>(''); // New state for the video URL
+    const [addProject] = useMutation(ADD_PROJECT_MUTATION);
+    const [isProjectExists, setIsProjectExists] = useState(false);
+
+    //@ts-ignore
+    const user = useSelector((state) => state.web3.user);
+
+    const { loading, error, data } = useQuery(GET_PROJECT_BY_FUNDRAISER_ID, {
+        variables: { fundRaiserId: user?.userId },
+        skip: !user?.userId,
+        //@ts-ignore
+        onCompleted: (data) => {
+            console.log(data)
+            if (!_.isEmpty(data.allProjects.nodes)) {
+                setFormData({
+                    title: _.get(data, 'allProjects.nodes[0].title'),
+                    description:  _.get(data,'allProjects.nodes[0.description'),
+                    goal:  _.get(data,'allProjects.nodes[0].goal'),
+                    deadline:  _.get(data,'allProjects.nodes[0].deadline'),
+                });
+                setVideoUrl(_.get(data,'allProjects.nodes[0].videoUrl'));
+                setIsProjectExists(true);
+            }
+        },
+    });
+
 
     const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value, type, checked, files } = e.target as HTMLInputElement;
@@ -64,17 +95,42 @@ const FundRaiserComponent: React.FC = () => {
         xhr.send(uploadFormData);
     };
 
-    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        // Handle form submission, for example, send data to an API endpoint
-        console.log(formData);
+        try {
+            const { title, description, goal, deadline } = formData;
+            const result = await addProject({
+                variables: {
+                    title,
+                    description,
+                    goal: parseFloat(goal),
+                    deadline: new Date(deadline).toISOString(),
+                    videoUrl,
+                    fundRaiserId: user.userId
+                }
+            });
+            console.log('Project added:', result.data);
+            // Optionally, reset form fields here
+            setFormData({
+                title: '',
+                description: '',
+                goal: '',
+                deadline: '',
+            });
+            setVideoUrl('');
+            notifySuccess('Project Created')
+        } catch (error) {
+            console.error('Failed to add project:', error);
+            notify('Failed to add project. Please try again.');
+        }
     };
 
+    console.log('formData', formData)
     return (
         <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md flex">
             {/* Video Upload Zone */}
             <div className="w-1/2 pr-6">
-                <h2 className="text-2xl font-bold mb-4">Upload Video</h2>
+                {!isProjectExists && <> <h2 className="text-2xl font-bold mb-4">Upload Video</h2>
                 <div className="flex items-center justify-center w-full">
                     <label htmlFor="video-upload" className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-500 focus:outline-none">
                         <svg className="w-12 h-12 text-gray-400" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
@@ -89,6 +145,7 @@ const FundRaiserComponent: React.FC = () => {
                         <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
                     </div>
                 )}
+                   </>}
                 {videoUrl && (
                     <div className="mt-4">
                         <h3 className="text-lg font-semibold mb-2">Uploaded Video:</h3>
@@ -101,11 +158,14 @@ const FundRaiserComponent: React.FC = () => {
             </div>
             {/* Form Fields */}
             <div className="w-1/2 pl-6">
-                <h2 className="text-2xl font-bold mb-4">Create a New Project</h2>
+                {!isProjectExists && <h2 className="text-2xl font-bold mb-4">Create a New Project</h2>}
+                {isProjectExists && <h2 className="text-2xl font-bold mb-4">Your Project</h2>}
+
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">
                         <label className="block text-gray-700">Title:</label>
                         <input
+                            disabled={isProjectExists}
                             type="text"
                             name="title"
                             value={formData.title}
@@ -117,6 +177,7 @@ const FundRaiserComponent: React.FC = () => {
                     <div className="mb-4">
                         <label className="block text-gray-700">Description:</label>
                         <textarea
+                            disabled={isProjectExists}
                             name="description"
                             value={formData.description}
                             onChange={handleChange}
@@ -126,6 +187,7 @@ const FundRaiserComponent: React.FC = () => {
                     <div className="mb-4">
                         <label className="block text-gray-700">Goal (Number of ETH):</label>
                         <input
+                            disabled={isProjectExists}
                             placeholder="Input number of ETH to Raise"
                             type="number"
                             name="goal"
@@ -137,7 +199,8 @@ const FundRaiserComponent: React.FC = () => {
                     </div>
                     <div className="mb-4">
                         <label className="block text-gray-700">Deadline:</label>
-                        <input
+                        {!isProjectExists && <input
+                            disabled={isProjectExists}
                             type="datetime-local"
                             name="deadline"
                             value={formData.deadline}
@@ -145,14 +208,20 @@ const FundRaiserComponent: React.FC = () => {
                             required
                             className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:border-blue-300"
                         />
+                        }
+                        {isProjectExists && formatTimestampToLocalDateTime(formData.deadline)}
                     </div>
-                    <button
+                    {!isProjectExists && <button
                         type="submit"
                         className="w-full bg-blue-500 text-white px-3 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring focus:ring-blue-300"
                     >
                         Submit
-                    </button>
+                    </button>}
                 </form>
+            </div>
+            <div>
+
+
             </div>
         </div>
     );

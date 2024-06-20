@@ -57,3 +57,19 @@ export const UPLOAD_VIDEO = gql`
     }
   }
 `;
+
+
+export const GET_PROJECT_BY_FUNDRAISER_ID = gql`
+   query GetProjectByFundRaiserId($fundRaiserId: Int!) {
+    allProjects(condition:{fundRaiserId: $fundRaiserId} ) {
+     nodes{
+       id
+      title
+      description
+      goal
+      deadline
+      videoUrl
+    }
+    }
+  }
+`;

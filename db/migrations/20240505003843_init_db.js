@@ -5,6 +5,23 @@
 exports.up = async function (knex) {
 
     await knex.raw(`
+
+       
+        CREATE OR REPLACE FUNCTION update_timestamp()
+    RETURNS TRIGGER AS $$
+            BEGIN
+        IF TG_OP = 'INSERT' THEN
+            NEW.created_at = CURRENT_TIMESTAMP;
+            NEW.updated_at = CURRENT_TIMESTAMP;
+            RETURN NEW;
+            ELSIF TG_OP = 'UPDATE' THEN
+            NEW.updated_at = CURRENT_TIMESTAMP;
+            RETURN NEW;
+            END IF;
+            END;
+    $$ LANGUAGE plpgsql;
+
+
         CREATE TABLE IF NOT EXISTS public.users
         (
             id serial,
@@ -21,7 +38,7 @@ exports.up = async function (knex) {
             deadline timestamp with time zone NOT NULL,
             is_reach_goal boolean DEFAULT false,
             is_closed boolean DEFAULT false,
-            fund_raiser_id integer,
+            fund_raiser_id integer UNIQUE,
             video_url text,
             created_at timestamp with time zone,
             updated_at timestamp with time zone,
@@ -66,6 +83,18 @@ exports.up = async function (knex) {
             ON UPDATE NO ACTION
                ON DELETE NO ACTION
     NOT VALID;
+    
+     CREATE TRIGGER trigger_name
+        BEFORE INSERT OR UPDATE ON investor_records
+        FOR EACH ROW EXECUTE FUNCTION update_timestamp();
+
+
+CREATE TRIGGER trigger_name
+        BEFORE INSERT OR UPDATE ON projects
+        FOR EACH ROW EXECUTE FUNCTION update_timestamp();
+
+
+
     `);
 
 };
@@ -77,9 +106,10 @@ exports.up = async function (knex) {
 exports.down = async function (knex) {
 
     await knex.raw(`
-        DROP TABLE IF EXISTS investor_records CASCADE;
-        DROP TABLE IF EXISTS projects CASCADE;
-        DROP TABLE IF EXISTS users CASCADE;
+        DROP TABLE investor_records CASCADE;
+        DROP TABLE projects CASCADE;
+        DROP TABLE users CASCADE;
+        DROP FUNCTION update_timestamp();
 
     `);
 };
