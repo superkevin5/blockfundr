@@ -1,13 +1,16 @@
 import { Navbar } from "@/components/navbar";
-import { Link } from "@nextui-org/link";
 import { Head } from "./head";
 import 'react-toastify/dist/ReactToastify.css';
+import {useDispatch} from "react-redux";
 
 export default function DefaultLayout({
 	children,
 }: {
 	children: React.ReactNode;
 }) {
+	const dispatch = useDispatch()
+
+
 	return (
 		<div className="relative flex flex-col h-screen">
 			<Head />

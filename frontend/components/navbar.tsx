@@ -4,13 +4,15 @@ import {
 import {ToastContainer, toast} from 'react-toastify';
 import { faWallet, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 import React, {useEffect, useState} from "react";
-import {useRouter} from "next/router";
+import {Router, useRouter} from "next/router";
 import '@fortawesome/fontawesome-svg-core/styles.css'; // Import the CSS
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {useDispatch, useSelector} from "react-redux";
 import {userLoaded, walletAddressLoaded} from "@/redux/actions";
 import {useApolloClient} from "@apollo/client";
-import {clearKeyFromLocalStorage, getItemWithExpiration, setItemWithExpiration} from "@/utils/date"; // Import the wallet icon
+import {clearKeyFromLocalStorage, getItemWithExpiration, setItemWithExpiration} from "@/utils/date";
+import {chainOrAccountChangedHandler} from "@/utils/common";
+import {getAllFunding, loadAccount, loadBlockchain, loadCrowdFundingContract, loadWeb3} from "@/requests/chainRequests"; // Import the wallet icon
 
 const notify = (error: String) => toast.error(error);
 
@@ -26,12 +28,25 @@ export const Navbar = () => {
     useEffect(() => {
         checkAuth()
     }, []);
+
+    Router.events.on("routeChangeStart",()=> console.log('start'))
+    Router.events.on("routeChangeComplete",()=> console.log('done'))
+    Router.events.on("routeChangeError",()=> console.log('error'))
+
+    useEffect(() => {
+        //@ts-ignore
+        window.ethereum.on('accountsChanged', chainOrAccountChangedHandler);
+        //@ts-ignore
+        window.ethereum.on('chainChanged', chainOrAccountChangedHandler);
+    }, [])
+
     const checkAuth = async () => {
         try {
             // Check if the user is logged in
             const account = getItemWithExpiration("user"); // Determine if the user is logged in
             if (account) {
                 dispatch(walletAddressLoaded(account));
+
             } else {
                 dispatch(walletAddressLoaded(null));
                 router.push('/');
@@ -56,6 +71,7 @@ export const Navbar = () => {
                     dispatch(walletAddressLoaded(account));
                     setItemWithExpiration("user", account, 60)
                     console.log(`Connected account: ${account}`);
+                    // await loadBlockchain(dispatch)
                     toast.success(`Wallet connected: ${account}`);
                 } else {
                     console.error("No accounts found.");

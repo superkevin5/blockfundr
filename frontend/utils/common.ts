@@ -83,28 +83,10 @@ export const withdrawRequestDataFormatter = (data) =>{
     }
 }
 
-// @ts-ignore
-export const connectWithWallet = async (onSuccess) => {
-    //connect web3 with http provider
-    // @ts-ignore
-    if (window.ethereum) {
-        // @ts-ignore
-        window.ethereum.request({method:"eth_requestAccounts"})
-            // @ts-ignore
-            .then(res=>{
-                onSuccess()
-                // @ts-ignore
-            }).catch(error=>{
-            alert(error.message)
-        })
-    } else {
-        window.alert(
-            "Non-Ethereum browser detected. You should consider trying MetaMask!"
-        );
-    }
-};
 
 export const chainOrAccountChangedHandler = () => {
     // reload the page to avoid any errors with chain or account change.
     window.location.reload();
 }
+
+

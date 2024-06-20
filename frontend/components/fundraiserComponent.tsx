@@ -23,6 +23,8 @@ const FundRaiserComponent: React.FC = () => {
 
     //@ts-ignore
     const user = useSelector((state) => state.web3.user);
+    //@ts-ignore
+    const crowdFundingContract = useSelector(state=>state.fundingReducer.contract)
 
     const { loading, error, data } = useQuery(GET_PROJECT_BY_FUNDRAISER_ID, {
         variables: { fundRaiserId: user?.userId },
