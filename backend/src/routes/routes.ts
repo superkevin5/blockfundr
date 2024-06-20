@@ -12,12 +12,33 @@ import fs from 'fs';
 dotenv.config();
 const router = express.Router();
 
-// Configure multer for file uploads
+
+// Function to ensure directory exists
+const ensureDirectoryExists = async (directory: string): Promise<void> => {
+    try {
+        await fs.promises.mkdir(directory, { recursive: true });
+    } catch (err) {
+        //@ts-ignore
+        if (err.code !== 'EEXIST') {
+            throw err;
+        }
+    }
+};
+
+// Multer disk storage configuration
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'uploads/'); // Specify the destination directory
+    destination: async (req: Request, file: Express.Multer.File, cb) => {
+        const uploadDir = path.join(__dirname, '..', '..','uploads'); // Assuming uploads folder is created in the root folder
+        try {
+            await ensureDirectoryExists(uploadDir);
+            cb(null, uploadDir); // Specify the destination directory
+        } catch (err) {
+            console.error('Error creating uploads directory:', err);
+            //@ts-ignore
+            cb(err, null);
+        }
     },
-    filename: (req, file, cb) => {
+    filename: (req: Request, file: Express.Multer.File, cb) => {
         cb(null, Date.now() + path.extname(file.originalname)); // Generate a unique filename
     },
 });
