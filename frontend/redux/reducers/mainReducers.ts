@@ -6,7 +6,7 @@ import {
     CROWD_FUNDING_CONTRACT_LOADED, INCREASE_PROGRESS, NEW_PROJECT_CONTRACT_LOADED, NEW_PROJECT_LOADED,
     PROJECT_CONTRACTS_LOADED, PROJECTS_LOADED, USER_LOADED,
     WALLET_ADDRESS_LOADED,
-    WEB3_LOADED,
+    WEB3_LOADED, WEB3_PROVIDER_LOADED,
     WITHDRAW_BALANCE
 } from "@/types";
 import {weiToEther} from "@/utils/common";
@@ -30,6 +30,12 @@ export const web3Reducer = (state = initialState, action) => {
                 ...state,
                 account: action.payload,
             };
+
+        case WEB3_PROVIDER_LOADED:
+            return {
+                ...state,
+                provider: action.payload,
+            };
         default:
             return state;
     }
@@ -39,6 +45,7 @@ export const web3Reducer = (state = initialState, action) => {
 export const fundingReducer = (state = initialState, action) => {
     // eslint-disable-next-line default-case
     switch (action.type) {
+
         case CROWD_FUNDING_CONTRACT_LOADED:
             return {
                 ...state,

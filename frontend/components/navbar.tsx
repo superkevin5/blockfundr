@@ -8,11 +8,13 @@ import {Router, useRouter} from "next/router";
 import '@fortawesome/fontawesome-svg-core/styles.css'; // Import the CSS
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {useDispatch, useSelector} from "react-redux";
-import {userLoaded, walletAddressLoaded} from "@/redux/actions";
+import {userLoaded, walletAddressLoaded, web3ProviderLoaded} from "@/redux/actions";
 import {useApolloClient} from "@apollo/client";
 import {clearKeyFromLocalStorage, getItemWithExpiration, setItemWithExpiration} from "@/utils/date";
 import {chainOrAccountChangedHandler} from "@/utils/common";
-import {getAllFunding, loadAccount, loadBlockchain, loadCrowdFundingContract, loadWeb3} from "@/requests/chainRequests"; // Import the wallet icon
+import {loadBlockchain} from "@/requests/chainRequests";
+import web3Singleton from "@/utils/web3Singleton";
+import Web3 from "web3"; // Import the wallet icon
 
 const notify = (error: String) => toast.error(error);
 
@@ -45,8 +47,7 @@ export const Navbar = () => {
             // Check if the user is logged in
             const account = getItemWithExpiration("user"); // Determine if the user is logged in
             if (account) {
-                dispatch(walletAddressLoaded(account));
-
+                handleConnectWallet()
             } else {
                 dispatch(walletAddressLoaded(null));
                 router.push('/');
@@ -68,10 +69,12 @@ export const Navbar = () => {
                 const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
                 if (accounts.length > 0) {
                     const account = accounts[0];
+
+                    //@ts-ignore
                     dispatch(walletAddressLoaded(account));
                     setItemWithExpiration("user", account, 60)
                     console.log(`Connected account: ${account}`);
-                    // await loadBlockchain(dispatch)
+                    await loadBlockchain()
                     toast.success(`Wallet connected: ${account}`);
                 } else {
                     console.error("No accounts found.");

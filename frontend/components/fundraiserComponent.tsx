@@ -1,11 +1,15 @@
-import React, { useState, ChangeEvent, FormEvent } from 'react';
-import { toast } from 'react-toastify';
+import React, {useState, ChangeEvent, FormEvent, useEffect} from 'react';
+import {toast} from 'react-toastify';
 import {useMutation, useQuery} from "@apollo/client";
 import {ADD_PROJECT_MUTATION} from "@/requests/mutations";
 import {useSelector} from "react-redux";
 import {GET_PROJECT_BY_FUNDRAISER_ID} from "@/requests/queries";
 import _ from 'lodash'
 import {formatTimestampToLocalDateTime} from "@/utils/date";
+import {getCrowdFundingContract} from "@/utils/requestHandlers";
+import {etherToWei} from "@/utils/common";
+import {getMyProject} from "@/requests/chainRequests";
+
 const notify = (error: string) => toast.error(error); // Function to display error notifications
 const notifySuccess = (msg: string) => toast.success(msg); // Function to display error notifications
 
@@ -20,34 +24,15 @@ const FundRaiserComponent: React.FC = () => {
     const [videoUrl, setVideoUrl] = useState<string>(''); // New state for the video URL
     const [addProject] = useMutation(ADD_PROJECT_MUTATION);
     const [isProjectExists, setIsProjectExists] = useState(false);
-
     //@ts-ignore
-    const user = useSelector((state) => state.web3.user);
-    //@ts-ignore
-    const crowdFundingContract = useSelector(state=>state.fundingReducer.contract)
-
-    const { loading, error, data } = useQuery(GET_PROJECT_BY_FUNDRAISER_ID, {
-        variables: { fundRaiserId: user?.userId },
-        skip: !user?.userId,
-        //@ts-ignore
-        onCompleted: (data) => {
-            console.log(data)
-            if (!_.isEmpty(data.allProjects.nodes)) {
-                setFormData({
-                    title: _.get(data, 'allProjects.nodes[0].title'),
-                    description:  _.get(data,'allProjects.nodes[0.description'),
-                    goal:  _.get(data,'allProjects.nodes[0].goal'),
-                    deadline:  _.get(data,'allProjects.nodes[0].deadline'),
-                });
-                setVideoUrl(_.get(data,'allProjects.nodes[0].videoUrl'));
-                setIsProjectExists(true);
-            }
-        },
-    });
+    const account = useSelector((state) => state.web3.account);
+    useEffect(() => {
+        loadMyProject();
+    }, [account]); // Run this effect when the account changes
 
 
     const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value, type, checked, files } = e.target as HTMLInputElement;
+        const {name, value, type, checked, files} = e.target as HTMLInputElement;
         if (type === 'file' && files && files.length > 0) {
             const file = files[0];
             if (file.size > 50 * 1024 * 1024) {
@@ -65,6 +50,24 @@ const FundRaiserComponent: React.FC = () => {
         }
     };
 
+    async function loadMyProject() {
+        try {
+            const projects = await getMyProject(account);
+            if (!_.isEmpty(projects)) {
+                const myProject = projects[0];
+                setFormData({
+                    title: myProject.title,
+                    description: myProject.description,
+                    goal: myProject.goalAmount,
+                    deadline: myProject.deadline,
+                });
+                setIsProjectExists(true);
+            }
+        } catch (error) {
+            console.error('Failed to load project:', error);
+            notify('Failed to load project details.');
+        }
+    }
     const handleFileUpload = (file: File) => {
         const uploadFormData = new FormData();
         uploadFormData.append('video', file);
@@ -100,26 +103,12 @@ const FundRaiserComponent: React.FC = () => {
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         try {
-            const { title, description, goal, deadline } = formData;
-            const result = await addProject({
-                variables: {
-                    title,
-                    description,
-                    goal: parseFloat(goal),
-                    deadline: new Date(deadline).toISOString(),
-                    videoUrl,
-                    fundRaiserId: user.userId
-                }
-            });
-            console.log('Project added:', result.data);
+            const {title, description, goal, deadline} = formData;
+            const crowdFundingContract = await getCrowdFundingContract()
+            //@ts-ignore
+            const res = await crowdFundingContract.methods.createProject(etherToWei(0.00001), new Date(deadline).getTime(), etherToWei(Number(goal)), title, description).send({from: account})
             // Optionally, reset form fields here
-            setFormData({
-                title: '',
-                description: '',
-                goal: '',
-                deadline: '',
-            });
-            setVideoUrl('');
+            await loadMyProject()
             notifySuccess('Project Created')
         } catch (error) {
             console.error('Failed to add project:', error);
@@ -127,32 +116,35 @@ const FundRaiserComponent: React.FC = () => {
         }
     };
 
-    console.log('formData', formData)
     return (
         <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md flex">
             {/* Video Upload Zone */}
             <div className="w-1/2 pr-6">
                 {!isProjectExists && <> <h2 className="text-2xl font-bold mb-4">Upload Video</h2>
-                <div className="flex items-center justify-center w-full">
-                    <label htmlFor="video-upload" className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-500 focus:outline-none">
-                        <svg className="w-12 h-12 text-gray-400" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                            <path d="M16.8 4.29A7.95 7.95 0 0010 2a7.95 7.95 0 00-6.8 2.29 7.95 7.95 0 000 11.42A7.95 7.95 0 0010 18a7.95 7.95 0 006.8-2.29 7.95 7.95 0 000-11.42zM10 16c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm-1-9v4.59l3.29 3.29 1.42-1.42L11 10.17V7H9zm1-5a9 9 0 100 18 9 9 0 000-18z" />
-                        </svg>
-                        <span className="mt-2 text-sm text-gray-600">Click to upload a video (Max size: 50MB)</span>
-                        <input id="video-upload" name="video_url" type="file" className="hidden" onChange={handleChange} />
-                    </label>
-                </div>
-                {uploadProgress > 0 && (
-                    <div className="w-full bg-gray-200 rounded-full h-2.5 mt-4">
-                        <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
+                    <div className="flex items-center justify-center w-full">
+                        <label htmlFor="video-upload"
+                               className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-500 focus:outline-none">
+                            <svg className="w-12 h-12 text-gray-400" fill="currentColor"
+                                 xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                <path
+                                    d="M16.8 4.29A7.95 7.95 0 0010 2a7.95 7.95 0 00-6.8 2.29 7.95 7.95 0 000 11.42A7.95 7.95 0 0010 18a7.95 7.95 0 006.8-2.29 7.95 7.95 0 000-11.42zM10 16c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm-1-9v4.59l3.29 3.29 1.42-1.42L11 10.17V7H9zm1-5a9 9 0 100 18 9 9 0 000-18z"/>
+                            </svg>
+                            <span className="mt-2 text-sm text-gray-600">Click to upload a video (Max size: 50MB)</span>
+                            <input id="video-upload" name="video_url" type="file" className="hidden"
+                                   onChange={handleChange}/>
+                        </label>
                     </div>
-                )}
-                   </>}
+                    {uploadProgress > 0 && (
+                        <div className="w-full bg-gray-200 rounded-full h-2.5 mt-4">
+                            <div className="bg-blue-600 h-2.5 rounded-full" style={{width: `${uploadProgress}%`}}></div>
+                        </div>
+                    )}
+                </>}
                 {videoUrl && (
                     <div className="mt-4">
                         <h3 className="text-lg font-semibold mb-2">Uploaded Video:</h3>
                         <video controls className="w-full">
-                            <source src={process.env.apiRoot + '/api' + videoUrl} type="video/mp4" />
+                            <source src={process.env.apiRoot + '/api' + videoUrl} type="video/mp4"/>
                             Your browser does not support the video tag.
                         </video>
                     </div>
@@ -211,7 +203,7 @@ const FundRaiserComponent: React.FC = () => {
                             className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:border-blue-300"
                         />
                         }
-                        {isProjectExists && formatTimestampToLocalDateTime(formData.deadline)}
+                        {isProjectExists && formData.deadline}
                     </div>
                     {!isProjectExists && <button
                         type="submit"

@@ -1,5 +1,14 @@
 import {GET_USER_BY_WALLET, SAVE_USER} from "@/requests/queries";
+import web3 from "web3";
+import CrowdFunding from '../contracts/client/artifacts/contracts/Crowdfunding.sol/Crowdfunding.json'
+
 import _ from 'lodash'
+import {loadCrowdFundingContract, loadWeb3} from "@/requests/chainRequests";
+
+
+export const crowdFundingContractAddress = "0x945c361784C94668da16240aDd93dc633e46da3E";
+
+
 export const saveOrFetchUser = async (client:any, walletAddress:any) => {
     try {
         const { data } = await client.query({
@@ -62,4 +71,9 @@ export async function logout() {
             'Content-Type': 'application/json',
         }
     });
+}
+
+export async function getCrowdFundingContract() {
+    //@ts-ignore
+    return await loadCrowdFundingContract(await loadWeb3())
 }

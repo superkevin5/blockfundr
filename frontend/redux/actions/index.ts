@@ -6,7 +6,7 @@ import {
     PROJECT_CONTRACTS_LOADED,
     PROJECTS_LOADED, USER_LOADED,
     WALLET_ADDRESS_LOADED,
-    WEB3_LOADED, WITHDRAW_BALANCE
+    WEB3_LOADED, WEB3_PROVIDER_LOADED, WITHDRAW_BALANCE
 } from "@/types";
 
 export const web3Loaded = (web3: any) => {
@@ -34,6 +34,10 @@ export const userLoaded = (user: any) => {
 
 
 // Crowd funding actions
+export const web3ProviderLoaded = (provider: any) => ({
+    type: WEB3_PROVIDER_LOADED,
+    payload: provider
+});
 
 export const crowdFundingContractLoaded = (contract: any) => {
     return {

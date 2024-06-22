@@ -9,35 +9,31 @@ import {
 } from "@/redux/actions";
 import Project from '../contracts/client/artifacts/contracts/Project.sol/Project.json'
 import {projectDataFormatter} from "@/utils/common";
+import {crowdFundingContractAddress, getCrowdFundingContract} from "@/utils/requestHandlers";
+import web3Singleton from "@/utils/web3Singleton";
 // import { groupContributionByProject, groupContributors, projectDataFormatter, withdrawRequestDataFormatter} from "../helper/helper";
 
-const crowdFundingContractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
-
 //Load web3
-export const loadWeb3 = async (dispatch:any) => {
-    const web3 = new Web3(Web3.givenProvider || "http://localhost:8545");
-    dispatch(web3Loaded(web3));
-    return web3;
+export const loadWeb3 = async () => {
+    return web3Singleton.initialize(Web3.givenProvider)
 };
 
 // Load connected wallet
-export const loadAccount = async (web3:any, dispatch:any) => {
+export const loadAccount = async (web3: any) => {
     const account = await web3.eth.getAccounts();
     const network = await web3.eth.net.getId();
 
 //   if (network !== Number(process.env.REACT_APP_NETWORK_ID)) {
 //     alert("Contract not deployed in this network !");
 //   }
-    console.log('account', account, '---')
-    dispatch(walletAddressLoaded(account[0]));
-    localStorage.setItem("user",account[0])
+    // dispatch(walletAddressLoaded(account[0]));
+    // localStorage.setItem("user",account[0])
     return account;
 };
 
 //Connect with crowd funding contract
-export const loadCrowdFundingContract = async(web3:any,dispatch:any) =>{
-    const crowdFunding = new web3.eth.Contract(CrowdFunding.abi,crowdFundingContractAddress);
-    dispatch(crowdFundingContractLoaded(crowdFunding));
+export const loadCrowdFundingContract = async (web3: any) => {
+    const crowdFunding = new web3.eth.Contract(CrowdFunding.abi, crowdFundingContractAddress);
     return crowdFunding;
 }
 //
@@ -67,28 +63,22 @@ export const loadCrowdFundingContract = async(web3:any,dispatch:any) =>{
 // // 1 - Get all funding project address
 // // 2 - Connect with funding project contract
 // // 3 - Get project details
-export const getAllFunding = async(CrowdFundingContract:any,web3:any,dispatch:any) =>{
-
+export const getAllFunding = async (CrowdFundingContract: any, web3: any) => {
+    console.log('--')
     const fundingProjectList = await CrowdFundingContract.methods.returnAllProjects().call()
-
+    console.log('sss')
     //@ts-ignore
     const projectContracts = [];
     //@ts-ignore
     const projects = [];
 
-    await Promise.all(fundingProjectList.map(async (data:any)=>{
-        var projectConnector = new web3.eth.Contract(Project.abi,data);
+    await Promise.all(fundingProjectList.map(async (data: any) => {
+        var projectConnector = new web3.eth.Contract(Project.abi, data);
         const details = await projectConnector.methods.getProjectDetails().call()
         projectContracts.push(projectConnector);
-        const formattedProjectData = projectDataFormatter(details,data)
+        const formattedProjectData = projectDataFormatter(details, data)
         projects.push(formattedProjectData)
     }))
-
-    //@ts-ignore
-    dispatch(projectContractsLoaded(projectContracts));
-    //@ts-ignore
-    dispatch(projectsLoaded(projects));
-
 }
 //
 // // Contribute in fund raising project
@@ -194,13 +184,31 @@ export const getAllFunding = async(CrowdFundingContract:any,web3:any,dispatch:an
 //     return groupContributionByProject(getContributions);
 // }
 
-export const loadBlockchain = async(dispatch:any) =>{
-    console.log('1')
-    const web3 = await loadWeb3(dispatch)
-    console.log('2')
-    const account = await loadAccount(web3,dispatch)
-    console.log('3')
-    const crowdFundingContract = await loadCrowdFundingContract(web3,dispatch)
-    console.log('4')
-    await getAllFunding(crowdFundingContract,web3,dispatch)
+export const loadBlockchain = async () => {
+    console.log('load block chanin')
+    const web3Instance  = await loadWeb3()
+    const account = await loadAccount(web3Instance)
+    const crowdFundingContract = await loadCrowdFundingContract(web3Instance)
+    console.log('crowdFundingContract', crowdFundingContract)
+    await getAllFunding(crowdFundingContract, web3Instance)
+}
+
+export const getMyProject = async (myAccount: any) => {
+    const crowdFundingContract = await getCrowdFundingContract()
+    const fundingProjectList = await crowdFundingContract.methods.returnAllProjects().call()
+    //@ts-ignore
+    const projectContracts = [];
+    //@ts-ignore
+    const projects = [];
+
+    await Promise.all(fundingProjectList.map(async (data: any) => {
+        var projectConnector = new (await loadWeb3()).eth.Contract(Project.abi, data);
+        const details = await projectConnector.methods.getProjectDetails().call()
+        projectContracts.push(projectConnector);
+        const formattedProjectData = projectDataFormatter(details, data)
+        projects.push(formattedProjectData)
+    }))
+
+    //@ts-ignore
+    return _.filter(projects, p=>p.creator.toLowerCase() === myAccount)
 }

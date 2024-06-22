@@ -202,6 +202,8 @@ export interface OutboundInventoryOrder {
 
 
 export const WEB3_LOADED = "WEB3_LOADED";
+
+export const WEB3_PROVIDER_LOADED = "WEB3_PROVIDER_LOADED"
 export const WALLET_ADDRESS_LOADED = "WALLET_ADDRESS_LOADED";
 
 export const USER_LOADED = "USER_LOADED";

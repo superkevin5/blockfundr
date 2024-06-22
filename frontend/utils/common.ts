@@ -89,4 +89,3 @@ export const chainOrAccountChangedHandler = () => {
     window.location.reload();
 }
 
-
